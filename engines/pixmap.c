@@ -549,11 +549,7 @@ void init_engine(window_settings * ws)
     ACOLOR(title_outer, 0.8, 0.8, 0.8, 0.8);
 
     /* private frame settings for inactive frames */
-<<<<<<< HEAD
-    pfs = malloc(sizeof(private_fs));
-=======
     pfs = g_malloc0(sizeof(private_fs));
->>>>>>> master
     ws->fs_inact->engine_fs = pfs;
     bzero(pfs, sizeof(private_fs));
     ACOLOR(inner, 0.8, 0.8, 0.8, 0.3);
