@@ -1144,12 +1144,8 @@ static void draw_button_with_glow_alpha_bstate(gint b_t, decor_t * d,
     {
 	w = button_region->base_x2 - x;
 	h = button_region->base_y2 - y;
-<<<<<<< HEAD
-
-	if (IS_VALID_SURFACE(ws->button_surface[b_state + b_index * S_COUNT]))
-=======
+ 
 	if (ws->button_surface[b_state + b * S_COUNT] != NULL)
->>>>>>> master
 	{
 	    draw_surface(cairo_get_target(cr), CAIRO_OPERATOR_OVER,
 			 ws->button_surface[b_state + b_index * S_COUNT], 0, 0,
@@ -5521,15 +5517,11 @@ static void load_buttons_image(window_settings * ws, gint y, gboolean dark_varia
 
     rel_button = get_b_offset(y);
 
-<<<<<<< HEAD
     if (dark_variant) {
             y = y + B_COUNT;
     }
 
-    if (IS_VALID_SURFACE(ws->button_array[y]))
-=======
     if (ws->button_array[y] != NULL)
->>>>>>> master
 	cairo_surface_destroy(ws->button_array[y]);
     ws->button_array[y] = NULL;
     file = make_filename("buttons", b_types[filename_key], "png");
