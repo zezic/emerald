@@ -232,7 +232,7 @@ void fini_engine(window_settings * ws)
     free(ws->fs_inact->engine_fs);
 }
 
-void my_engine_settings(GtkWidget * hbox, gboolean active)
+void my_engine_settings(GtkWidget * hbox, gboolean active, gboolean dark)
 {
     GtkWidget * vbox;
     GtkWidget * scroller;
@@ -275,13 +275,25 @@ void layout_engine_colors(GtkWidget * vbox)
     hbox = gtk_hbox_new(FALSE, 2);
 #endif
     gtk_box_pack_startC(vbox, hbox, TRUE, TRUE, 0);
-    my_engine_settings(hbox, TRUE);
+    my_engine_settings(hbox, TRUE, FALSE);
 #if GTK_CHECK_VERSION(3, 2, 0)
     gtk_box_pack_startC(hbox, gtk_separator_new (GTK_ORIENTATION_VERTICAL), FALSE, FALSE, 0);
 #else
     gtk_box_pack_startC(hbox, gtk_vseparator_new(), FALSE, FALSE, 0);
 #endif
-    my_engine_settings(hbox, FALSE);
+    my_engine_settings(hbox, FALSE, FALSE);
+#if GTK_CHECK_VERSION(3, 2, 0)
+    gtk_box_pack_startC(hbox, gtk_separator_new (GTK_ORIENTATION_VERTICAL), FALSE, FALSE, 0);
+#else
+    gtk_box_pack_startC(hbox, gtk_vseparator_new(), FALSE, FALSE, 0);
+#endif
+    my_engine_settings(hbox, TRUE, FALSE);
+#if GTK_CHECK_VERSION(3, 2, 0)
+    gtk_box_pack_startC(hbox, gtk_separator_new (GTK_ORIENTATION_VERTICAL), FALSE, FALSE, 0);
+#else
+    gtk_box_pack_startC(hbox, gtk_vseparator_new(), FALSE, FALSE, 0);
+#endif
+    my_engine_settings(hbox, FALSE, FALSE);
 }
 
 void layout_engine_settings(GtkWidget * vbox)

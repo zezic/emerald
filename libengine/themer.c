@@ -86,11 +86,11 @@ static gchar* display_part(const gchar *p)
     g_free(name);
     name = tmp;
   }
-    
+
   if ((tmp = g_strrstr(name,"."))) {
     *tmp = 0;
   }
-    
+
   return name;
 }
 
@@ -110,15 +110,15 @@ GtkWidget * scaler_new(gdouble low, gdouble high, gdouble prec)
     gtk_widget_set_size_request(w,100,-1);
     return w;
 }
-void add_color_alpha_value(gchar * caption, gchar * basekey, gchar * sect, gboolean active) 
+void add_color_alpha_value(gchar * caption, gchar * basekey, gchar * sect, gboolean active, gboolean dark)
 {
     GtkWidget * w;
     gchar * colorkey;
     gchar * alphakey;
-    colorkey = g_strdup_printf(active?"active_%s":"inactive_%s",basekey);
-    alphakey = g_strdup_printf(active?"active_%s_alpha":"inactive_%s_alpha",
+    colorkey = g_strdup_printf(dark?(active?"dark_active_%s":"dark_inactive_%s"):(active?"active_%s":"inactive_%s"),basekey);
+    alphakey = g_strdup_printf(dark?(active?"dark_active_%s_alpha":"dark_inactive_%s_alpha"):(active?"active_%s_alpha":"inactive_%s_alpha"),
             basekey);
-    
+
     w = gtk_label_new(caption);
     table_append(w,FALSE);
 
@@ -406,7 +406,7 @@ void cb_apply_setting(GtkWidget * w, gpointer p)
 void setup_dbus()
 {
     dbcon = dbus_bus_get (DBUS_BUS_SESSION,NULL);
-    dbus_connection_setup_with_g_main(dbcon,NULL);    
+    dbus_connection_setup_with_g_main(dbcon,NULL);
 }
 #endif
 void write_setting(SettingItem * item, gpointer p)
@@ -719,7 +719,7 @@ void set_float(SettingItem * item, gdouble f)
 {
     if(!strcmp(G_OBJECT_TYPE_NAME(item->widget),"GtkSpinButton")) {
          gtk_spin_button_set_value((GtkSpinButton *)item->widget, f);
-    } 
+    }
     else {
          gtk_range_set_value(GTK_RANGE(item->widget),f);
     }
@@ -1035,7 +1035,7 @@ void init_engine_list()
     /*presumes the container & combo are created
       presumes the combo is NOT registered       */
     GtkCellRenderer * r;
-    
+
     EngineModel = gtk_list_store_new(ENGINE_COL_COUNT,G_TYPE_STRING,
             G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,GDK_TYPE_PIXBUF);
     gchar * local_engine_dir = g_strjoin("/",g_get_home_dir(),".emerald/engines",NULL);
@@ -1049,7 +1049,7 @@ void init_engine_list()
     engine_scan_dir(local_engine_dir);
     g_free(local_engine_dir);
     engine_scan_dir(ENGINE_DIR);
-    
+
     register_setting(EngineCombo,ST_ENGINE_COMBO,"engine","engine");
 }
 GtkWidget * build_notebook_page(gchar * title, GtkWidget * notebook)

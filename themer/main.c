@@ -764,7 +764,7 @@ void layout_button_pane(GtkWidget * vbox)
         layout_button_box(vbox,i);
     }
 }
-void layout_window_frame(GtkWidget * vbox,gboolean active)
+void layout_window_frame(GtkWidget * vbox,gboolean active,gboolean dark)
 {
     GtkWidget * scrollwin;
     scrollwin = gtk_scrolled_window_new(NULL,NULL);
@@ -1038,8 +1038,10 @@ void layout_left_global_pane(GtkWidget * hbox)
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,2);
     gtk_box_pack_startC(hbox,vbox,TRUE,TRUE,0);
 
-    layout_window_frame(build_frame(vbox,_("Active Window"),FALSE),TRUE);
-    layout_window_frame(build_frame(vbox,_("Inactive Window"),FALSE),FALSE);
+    layout_window_frame(build_frame(vbox,_("Active Window"),FALSE),TRUE,FALSE);
+    layout_window_frame(build_frame(vbox,_("Inactive Window"),FALSE),FALSE,FALSE);
+    layout_window_frame(build_frame(vbox,_("Dark Active Window"),FALSE),TRUE,TRUE);
+    layout_window_frame(build_frame(vbox,_("Dark Inactive Window"),FALSE),FALSE,TRUE);
     /* layout stuff here */
 }
 void layout_right_global_pane(GtkWidget * hbox)

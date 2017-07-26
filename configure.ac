@@ -112,6 +112,20 @@ AC_PATH_PROG(UPDATE_MIME_DATABASE, update-mime-database)
 AC_PATH_PROG(UPDATE_DESKTOP_DATABASE, update-desktop-database)
 AC_PATH_PROG(UPDATE_ICON_CACHE, gtk-update-icon-cache)
 
+
+AC_ARG_ENABLE(debug,
+AS_HELP_STRING([--enable-debug],
+               [enable debugging, default: no]),
+[case "${enableval}" in
+             yes) debug=true ;;
+             no)  debug=false ;;
+             *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+esac],
+[debug=false])
+
+AM_CONDITIONAL(DEBUG, test x"$debug" = x"true")
+
+
 AC_OUTPUT([
 libengine/emeraldengine.pc
 Makefile

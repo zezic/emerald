@@ -1118,10 +1118,13 @@ static void draw_button_with_glow_alpha_bstate(gint b_t, decor_t * d,
     gdouble glow_w, glow_h;	/* glow width and height  */
     window_settings *ws = d->fs->ws;
 
+
     if (b_state < 0)
 	b_state = get_b_state(d, b_t);
 
     b = get_b_t_offset(b_t);
+
+    gint b_index = b;
 
     if (btbistate[b_t])
 	if (d->state & btstateflag[b_t])
@@ -1134,14 +1137,19 @@ static void draw_button_with_glow_alpha_bstate(gint b_t, decor_t * d,
     x = button_region->base_x1;
     y = button_region->base_y1;
 
+    if (HAVE_DARK_THEME && d->dark) {
+            b_index = b_index + B_COUNT;
+    }
+
     if (ws->use_pixmap_buttons)
     {
 	w = button_region->base_x2 - x;
 	h = button_region->base_y2 - y;
-	if (IS_VALID_SURFACE(ws->button_surface[b_state + b * S_COUNT]))
+
+	if (IS_VALID_SURFACE(ws->button_surface[b_state + b_index * S_COUNT]))
 	{
 	    draw_surface(cairo_get_target(cr), CAIRO_OPERATOR_OVER,
-			 ws->button_surface[b_state + b * S_COUNT], 0, 0,
+			 ws->button_surface[b_state + b_index * S_COUNT], 0, 0,
 			 x, y, w, h, button_alpha);
 	}
 
@@ -2038,12 +2046,20 @@ static void draw_window_decoration(decor_t * d)
 	frame_settings *fs = d->fs;
 
 	d->active = TRUE;
-	d->fs = d->fs->ws->fs_act;
+        if (d->dark) {
+                d->fs = d->fs->ws->fs_dark_act;
+        } else {
+                d->fs = d->fs->ws->fs_act;
+        }
 	d->surface = d->p_active_surface;
 	d->buffer_surface = d->p_active_buffer_surface;
 	draw_window_decoration_real(d, FALSE);
 	d->active = FALSE;
-	d->fs = d->fs->ws->fs_inact;
+        if (d->dark) {
+	        d->fs = d->fs->ws->fs_dark_inact;
+        } else {
+                d->fs = d->fs->ws->fs_inact;
+        }
 	d->surface = d->p_inactive_surface;
 	d->buffer_surface = d->p_inactive_buffer_surface;
 	draw_window_decoration_real(d, FALSE);
@@ -3760,7 +3776,7 @@ static void active_window_changed(WnckScreen * screen)
 	if (d && IS_VALID_SURFACE(d->surface) && d->decorated)
 	{
 	    d->active = wnck_window_is_active(win);
-	    d->fs = (d->active ? d->fs->ws->fs_act : d->fs->ws->fs_inact);
+            d->fs = (d->active ? d->fs->ws->fs_act : d->fs->ws->fs_inact);
 	    if (!g_slist_find(draw_list, d))
 		d->only_change_active = TRUE;
 	    d->prop_xid = wnck_window_get_xid(win);
@@ -3776,7 +3792,8 @@ static void active_window_changed(WnckScreen * screen)
 	if (d && IS_VALID_SURFACE(d->surface) && d->decorated)
 	{
 	    d->active = wnck_window_is_active(win);
-	    d->fs = (d->active ? d->fs->ws->fs_act : d->fs->ws->fs_inact);
+            d->fs = (d->active ? d->fs->ws->fs_dark_act : d->fs->ws->fs_dark_inact);
+
 	    if (!g_slist_find(draw_list, d))
 		d->only_change_active = TRUE;
 	    d->prop_xid = wnck_window_get_xid(win);
@@ -3800,7 +3817,36 @@ static void window_opened(WnckScreen * screen, WnckWindow * win)
     wnck_window_get_client_window_geometry(win, NULL, NULL, &d->client_width, &d->client_height);
 
     d->draw = draw_window_decoration;
-    d->fs = d->active ? global_ws->fs_act : global_ws->fs_inact;
+
+    d->dark = FALSE;
+
+    char dark_apps_class[][20] = { "Gnome-terminal", "Atom", "Blender", "Bitwig Studio", "Renoise", "Rawtherapee", "Darktable", "Mixxx", "discord" };
+    char dark_apps_name[][20] = { "qTox" };
+
+        size_t i = 0;
+        for( i = 0; i < sizeof(dark_apps_class) / sizeof(dark_apps_class[0]); i++)
+        {
+                if (wnck_window_get_class_group_name(win)) {
+                        if (strcmp(wnck_window_get_class_group_name(win), dark_apps_class[i]) == 0) {
+                                d->dark = TRUE;
+                        }
+                }
+        }
+        for( i = 0; i < sizeof(dark_apps_name) / sizeof(dark_apps_name[0]); i++)
+        {
+                if (wnck_window_get_name(win)) {
+                        if (strcmp(wnck_window_get_name(win), dark_apps_name[i]) == 0) {
+                                d->dark = TRUE;
+                        }
+                }
+        }
+
+
+    if (d->dark) {
+            d->fs = d->active ? global_ws->fs_dark_act : global_ws->fs_dark_inact;
+    } else {
+            d->fs = d->active ? global_ws->fs_act : global_ws->fs_inact;
+    }
 
     reset_buttons_bg_and_fade(d);
 
@@ -5379,17 +5425,24 @@ static void titlebar_font_changed(window_settings * ws)
     pango_font_metrics_unref(metrics);
 
 }
-static void load_buttons_image(window_settings * ws, gint y)
+static void load_buttons_image(window_settings * ws, gint y, gboolean dark_variant)
 {
     gchar *file;
     int i, pix_width = 0, pix_height = 0, rel_button;
+    int filename_key = y;
 
     rel_button = get_b_offset(y);
+
+    if (dark_variant) {
+            y = y + B_COUNT;
+    }
 
     if (IS_VALID_SURFACE(ws->button_array[y]))
 	cairo_surface_destroy(ws->button_array[y]);
     ws->button_array[y] = NULL;
-    file = make_filename("buttons", b_types[y], "png");
+    file = make_filename("buttons", b_types[filename_key], "png");
+
+
 
     if (file)
     {
@@ -5397,11 +5450,16 @@ static void load_buttons_image(window_settings * ws, gint y)
 	if (pixbuf)
 	{
 	    ws->button_array[y] = new_surface_from_pixbuf(pixbuf);
-	    pix_width = gdk_pixbuf_get_width(pixbuf) / S_COUNT;
+            if (HAVE_DARK_THEME) {
+                    pix_width = gdk_pixbuf_get_width(pixbuf) / (S_COUNT*2);
+            } else {
+                    pix_width = gdk_pixbuf_get_width(pixbuf) / S_COUNT;
+            }
 	    pix_height = gdk_pixbuf_get_height(pixbuf);
 	    g_object_unref(pixbuf);
 	}
     }
+
     g_free(file);
     if (!IS_VALID_SURFACE(ws->button_array[y]))
     {
@@ -5410,7 +5468,7 @@ static void load_buttons_image(window_settings * ws, gint y)
 	/* create an empty surface */
 	ws->button_array[y] = create_surface(pix_width * S_COUNT, pix_height);
     }
-    ws->c_icon_size[rel_button].w = pix_width;
+    ws->c_icon_size[rel_button].w = pix_width; //zzz
     ws->c_icon_size[rel_button].h = pix_height;
 
     for (i = 0; i < S_COUNT; i++)
@@ -5421,10 +5479,17 @@ static void load_buttons_image(window_settings * ws, gint y)
 
 	ws->button_surface[i + y * S_COUNT] =
 	  create_surface(pix_width, pix_height);
-	draw_surface(ws->button_surface[i + y * S_COUNT],
-		     CAIRO_OPERATOR_SOURCE,
-		     ws->button_array[y], i * pix_width, 0, 0, 0,
-		     pix_width, pix_height, 1.0);
+        if (dark_variant) {
+        	draw_surface(ws->button_surface[i + y * S_COUNT],
+        		     CAIRO_OPERATOR_SOURCE,
+        		     ws->button_array[y], i * pix_width + (pix_width * S_COUNT), 0, 0, 0,
+        		     pix_width, pix_height, 1.0);
+        } else {
+        	draw_surface(ws->button_surface[i + y * S_COUNT],
+        		     CAIRO_OPERATOR_SOURCE,
+        		     ws->button_array[y], i * pix_width, 0, 0, 0,
+        		     pix_width, pix_height, 1.0);
+        }
     }
 }
 
@@ -5579,8 +5644,12 @@ void load_button_image_setting(window_settings * ws)
 {
     gint i;
 
-    for (i = 0; i < B_COUNT; i++)
-	load_buttons_image(ws, i);
+    for (i = 0; i < B_COUNT; i++) {
+            load_buttons_image(ws, i, FALSE);
+            if (HAVE_DARK_THEME) {
+                    load_buttons_image(ws, i, TRUE);
+            }
+    }
 
     /* load active and inactive glow image */
     if (ws->use_button_glow || ws->use_button_inactive_glow)
@@ -5817,6 +5886,7 @@ int main(int argc, char *argv[])
     ws->button_fade_step_duration = 50;
     ws->button_fade_num_steps = 5;
     ws->blur_type = BLUR_TYPE_NONE;
+    ws->has_dark_theme = FALSE;
 
     /* DEFAULT TITLE OBJECT LAYOUT, does not use any odd buttons */
     ws->tobj_layout = g_strdup("IT::HNXC");
@@ -5839,6 +5909,24 @@ int main(int argc, char *argv[])
     ACOLOR(button, 0.8, 0.8, 0.8, 0.8);
     ACOLOR(button_halo, 0.0, 0.0, 0.0, 0.2);
     ws->fs_inact = pfs;
+
+    pfs = malloc(sizeof(frame_settings));
+    bzero(pfs, sizeof(frame_settings));
+    pfs->ws = ws;
+    ACOLOR(text, 1.0, 1.0, 1.0, 1.0);
+    ACOLOR(text_halo, 0.0, 0.0, 0.0, 0.2);
+    ACOLOR(button, 1.0, 1.0, 1.0, 0.8);
+    ACOLOR(button_halo, 0.0, 0.0, 0.0, 0.2);
+    ws->fs_dark_act = pfs;
+
+    pfs = malloc(sizeof(frame_settings));
+    bzero(pfs, sizeof(frame_settings));
+    pfs->ws = ws;
+    ACOLOR(text, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(text_halo, 0.0, 0.0, 0.0, 0.2);
+    ACOLOR(button, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(button_halo, 0.0, 0.0, 0.0, 0.2);
+    ws->fs_dark_inact = pfs;
 
     ws->round_top_left = TRUE;
     ws->round_top_right = TRUE;

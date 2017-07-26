@@ -14,7 +14,11 @@ void cairo_set_source_alpha_color(cairo_t * cr, alpha_color * c);
     load_color_setting(f,&((private_fs *)ws->fs_act->engine_fs)->zc.color,"active_" #zc ,SECT);\
     load_color_setting(f,&((private_fs *)ws->fs_inact->engine_fs)->zc.color,"inactive_" #zc ,SECT);\
     load_float_setting(f,&((private_fs *)ws->fs_act->engine_fs)->zc.alpha,"active_" #zc "_alpha",SECT);\
-    load_float_setting(f,&((private_fs *)ws->fs_inact->engine_fs)->zc.alpha,"inactive_" #zc "_alpha",SECT);
+    load_float_setting(f,&((private_fs *)ws->fs_inact->engine_fs)->zc.alpha,"inactive_" #zc "_alpha",SECT);\
+    load_color_setting(f,&((private_fs *)ws->fs_dark_act->engine_fs)->zc.color,"dark_active_" #zc ,SECT);\
+    load_color_setting(f,&((private_fs *)ws->fs_dark_inact->engine_fs)->zc.color,"dark_inactive_" #zc ,SECT);\
+    load_float_setting(f,&((private_fs *)ws->fs_dark_act->engine_fs)->zc.alpha,"dark_active_" #zc "_alpha",SECT);\
+    load_float_setting(f,&((private_fs *)ws->fs_dark_inact->engine_fs)->zc.alpha,"dark_inactive_" #zc "_alpha",SECT);
 
 void
 fill_rounded_rectangle (cairo_t       *cr,
@@ -81,13 +85,13 @@ typedef struct _SettingItem
 #define gtk_container_addC(a,b) gtk_container_add(GTK_CONTAINER(a),b)
 #define gtk_container_set_border_widthC(a,b) gtk_container_set_border_width(GTK_CONTAINER(a),b)
 
-#define ACAV(caption,basekey,sect) add_color_alpha_value(caption,basekey,sect,active)
+#define ACAV(caption,basekey,sect) add_color_alpha_value(caption,basekey,sect,active,dark)
 
 /* returns FALSE if couldn't find engine */
 gboolean get_engine_meta_info(const gchar * engine, EngineMetaInfo * inf);
 
 GtkWidget * scaler_new(gdouble low, gdouble high, gdouble prec);
-void add_color_alpha_value(gchar * caption, gchar * basekey, gchar * sect, gboolean active);
+void add_color_alpha_value(gchar * caption, gchar * basekey, gchar * sect, gboolean active, gboolean dark);
 
 void make_labels(gchar * header);
 GtkWidget * build_frame(GtkWidget * vbox, gchar * title, gboolean is_hbox);

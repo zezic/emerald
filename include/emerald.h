@@ -168,11 +168,13 @@ typedef struct _window_settings
 
     frame_settings * fs_act;
     frame_settings * fs_inact;
+    frame_settings * fs_dark_act;
+    frame_settings * fs_dark_inact;
     gint min_titlebar_height;
     gboolean        use_pixmap_buttons;
     PangoAlignment  title_text_align; /* = PANGO_ALIGN_CENTER; */
-    cairo_surface_t *button_surface[S_COUNT*B_COUNT];
-    cairo_surface_t *button_array[B_COUNT];
+    cairo_surface_t *button_surface[S_COUNT*B_COUNT*2];
+    cairo_surface_t *button_array[B_COUNT*2];
 
     gboolean	    use_button_glow;
     gboolean	    use_button_inactive_glow;
@@ -251,6 +253,7 @@ typedef struct _window_settings
     gboolean stretch_sides;
     gint blur_type; /* = BLUR_TYPE_NONE; */
 
+    gboolean has_dark_theme;
 } window_settings;
 
 struct _frame_settings
@@ -309,6 +312,7 @@ typedef struct _decor
     gint              client_height;
     gboolean	      decorated;
     gboolean	      active;
+    gboolean	      dark;
     PangoLayout	      *layout;
     gchar	      *name;
     cairo_pattern_t   *icon;
@@ -337,7 +341,11 @@ typedef struct _decor
     load_color_setting(f,&ws->fs_act->zc.color,"active_" #zc , #sec);\
     load_color_setting(f,&ws->fs_inact->zc.color,"inactive_" #zc , #sec);\
     load_float_setting(f,&ws->fs_act->zc.alpha,"active_" #zc "_alpha", #sec);\
-    load_float_setting(f,&ws->fs_inact->zc.alpha,"inactive_" #zc "_alpha", #sec);
+    load_float_setting(f,&ws->fs_inact->zc.alpha,"inactive_" #zc "_alpha", #sec); \
+    load_color_setting(f,&ws->fs_dark_act->zc.color,"dark_active_" #zc , #sec);\
+    load_color_setting(f,&ws->fs_dark_inact->zc.color,"dark_inactive_" #zc , #sec);\
+    load_float_setting(f,&ws->fs_dark_act->zc.alpha,"dark_active_" #zc "_alpha", #sec);\
+    load_float_setting(f,&ws->fs_dark_inact->zc.alpha,"dark_inactive_" #zc "_alpha", #sec);
 
 #define SHADE_LEFT   (1 << 0)
 #define SHADE_RIGHT  (1 << 1)
@@ -348,5 +356,7 @@ typedef struct _decor
 #define CORNER_TOPRIGHT    (1 << 1)
 #define CORNER_BOTTOMRIGHT (1 << 2)
 #define CORNER_BOTTOMLEFT  (1 << 3)
+
+#define HAVE_DARK_THEME TRUE
 
 #endif

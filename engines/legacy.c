@@ -331,8 +331,40 @@ void init_engine(window_settings * ws)
 
     /* private frame settings for inactive frames */
     pfs = malloc(sizeof(private_fs));
-    bzero(pfs, sizeof(private_fs));
     ws->fs_inact->engine_fs = pfs;
+    bzero(pfs, sizeof(private_fs));
+    ACOLOR(inner, 0.8, 0.8, 0.8, 0.3);
+    ACOLOR(outer, 0.8, 0.8, 0.8, 0.3);
+    ACOLOR(title_inner, 0.8, 0.8, 0.8, 0.6);
+    ACOLOR(title_outer, 0.8, 0.8, 0.8, 0.6);
+    ACOLOR(window_highlight, 1.0, 1.0, 1.0, 0.7);
+    ACOLOR(window_shadow, 0.6, 0.6, 0.6, 0.7);
+    ACOLOR(window_halo, 0.8, 0.8, 0.8, 0.7);
+    ACOLOR(separator_line, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(contents_highlight, 1.0, 1.0, 1.0, 0.8);
+    ACOLOR(contents_shadow, 0.6, 0.6, 0.6, 0.8);
+    ACOLOR(contents_halo, 0.8, 0.8, 0.8, 0.8);
+
+    /* private frame settings for active frames */
+    pfs = malloc(sizeof(private_fs));
+    ws->fs_dark_act->engine_fs = pfs;
+    bzero(pfs,sizeof(private_fs));
+    ACOLOR(inner, 0.8, 0.8, 0.8, 0.5);
+    ACOLOR(outer, 0.8, 0.8, 0.8, 0.5);
+    ACOLOR(title_inner, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(title_outer, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_highlight, 1.0, 1.0, 1.0, 0.8);
+    ACOLOR(window_shadow, 0.6, 0.6, 0.6, 0.8);
+    ACOLOR(window_halo, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(separator_line, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(contents_highlight, 1.0, 1.0, 1.0, 0.8);
+    ACOLOR(contents_shadow, 0.6, 0.6, 0.6, 0.8);
+    ACOLOR(contents_halo, 0.8, 0.8, 0.8, 0.8);
+
+    /* private frame settings for inactive frames */
+    pfs = malloc(sizeof(private_fs));
+    ws->fs_dark_inact->engine_fs = pfs;
+    bzero(pfs, sizeof(private_fs));
     ACOLOR(inner, 0.8, 0.8, 0.8, 0.3);
     ACOLOR(outer, 0.8, 0.8, 0.8, 0.3);
     ACOLOR(title_inner, 0.8, 0.8, 0.8, 0.6);
@@ -350,6 +382,8 @@ void fini_engine(window_settings * ws)
 {
     free(ws->fs_act->engine_fs);
     free(ws->fs_inact->engine_fs);
+    free(ws->fs_dark_act->engine_fs);
+    free(ws->fs_dark_inact->engine_fs);
 }
 
 void layout_corners_frame(GtkWidget * vbox)
@@ -387,7 +421,7 @@ void layout_corners_frame(GtkWidget * vbox)
     register_setting(junk, ST_FLOAT, SECT, "radius");
 }
 
-void my_engine_settings(GtkWidget * hbox, gboolean active)
+void my_engine_settings(GtkWidget * hbox, gboolean active, gboolean dark)
 {
     GtkWidget * vbox;
     GtkWidget * scroller;
@@ -397,7 +431,7 @@ void my_engine_settings(GtkWidget * hbox, gboolean active)
     vbox = gtk_vbox_new(FALSE, 2);
 #endif
     gtk_box_pack_startC(hbox, vbox, TRUE, TRUE, 0);
-    gtk_box_pack_startC(vbox, gtk_label_new(active?"Active Window":"Inactive Window"), FALSE, FALSE, 0);
+    gtk_box_pack_startC(vbox, gtk_label_new(dark?(active?"Dark Active Window":"Dark Inactive Window"):(active?"Active Window":"Inactive Window")), FALSE, FALSE, 0);
 #if GTK_CHECK_VERSION(3, 2, 0)
     gtk_box_pack_startC(vbox, gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 0);
 #else
@@ -444,13 +478,25 @@ void layout_engine_colors(GtkWidget * vbox)
     hbox = gtk_hbox_new(FALSE, 2);
 #endif
     gtk_box_pack_startC(vbox, hbox, TRUE, TRUE, 0);
-    my_engine_settings(hbox, TRUE);
+    my_engine_settings(hbox, TRUE, FALSE);
 #if GTK_CHECK_VERSION(3, 2, 0)
     gtk_box_pack_startC(hbox, gtk_separator_new (GTK_ORIENTATION_VERTICAL), FALSE, FALSE, 0);
 #else
     gtk_box_pack_startC(hbox, gtk_vseparator_new(), FALSE, FALSE, 0);
 #endif
-    my_engine_settings(hbox, FALSE);
+    my_engine_settings(hbox, FALSE, FALSE);
+#if GTK_CHECK_VERSION(3, 2, 0)
+    gtk_box_pack_startC(hbox, gtk_separator_new (GTK_ORIENTATION_VERTICAL), FALSE, FALSE, 0);
+#else
+    gtk_box_pack_startC(hbox, gtk_vseparator_new(), FALSE, FALSE, 0);
+#endif
+    my_engine_settings(hbox, TRUE, TRUE);
+#if GTK_CHECK_VERSION(3, 2, 0)
+    gtk_box_pack_startC(hbox, gtk_separator_new (GTK_ORIENTATION_VERTICAL), FALSE, FALSE, 0);
+#else
+    gtk_box_pack_startC(hbox, gtk_vseparator_new(), FALSE, FALSE, 0);
+#endif
+    my_engine_settings(hbox, FALSE, TRUE);
 }
 
 void layout_engine_settings(GtkWidget * vbox)

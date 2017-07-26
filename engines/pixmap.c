@@ -115,6 +115,7 @@ typedef struct _private_ws
     gboolean round_bottom_left;
     gboolean round_bottom_right;
     gboolean inactive_use_active_pixmaps;
+    gboolean dark_inactive_use_active_pixmaps;
     double	top_corner_radius;
     double	bottom_corner_radius;
 } private_ws;
@@ -474,6 +475,45 @@ void load_engine_settings(GKeyFile * f, window_settings * ws)
         load_float_setting(f, &pfs->pixmaps[i].height,
 		g_strdup_printf("%s_%s_height", pre, p_types[i]),SECT);
     }
+
+    pre = "dark_active";
+
+    /* dark active window */
+    pfs = ws->fs_dark_act->engine_fs;
+    for(i = 0; i < 11; i++) {
+        junk = g_strdup_printf("%s_%s", pre, p_types[i]);
+        TEXTURE_FROM_PNG(pfs->pixmaps[i].surface, make_filename("pixmaps", junk, "png"));
+
+        load_bool_setting(f, &pfs->pixmaps[i].use_scaled,
+		g_strdup_printf("%s_%s_use_scaled", pre, p_types[i]), SECT);
+        load_bool_setting(f, &pfs->pixmaps[i].use_width,
+		g_strdup_printf("%s_%s_use_width", pre, p_types[i]), SECT);
+        load_float_setting(f, &pfs->pixmaps[i].width,
+		g_strdup_printf("%s_%s_width", pre, p_types[i]), SECT);
+        load_bool_setting(f, &pfs->pixmaps[i].use_height,
+		g_strdup_printf("%s_%s_use_height", pre, p_types[i]), SECT);
+        load_float_setting(f, &pfs->pixmaps[i].height,
+		g_strdup_printf("%s_%s_height", pre, p_types[i]), SECT);
+    }
+
+    /* dark inactive window */
+    pfs = ws->fs_dark_inact->engine_fs;
+    if(!pws->dark_inactive_use_active_pixmaps) pre = "dark_inactive";
+    for(i = 0; i < 11; i++) {
+        junk = g_strdup_printf("%s_%s", pre, p_types[i]);
+        TEXTURE_FROM_PNG(pfs->pixmaps[i].surface, make_filename("pixmaps", junk, "png"));
+
+        load_bool_setting(f, &pfs->pixmaps[i].use_scaled,
+		g_strdup_printf("%s_%s_use_scaled", pre, p_types[i]),SECT);
+        load_bool_setting(f, &pfs->pixmaps[i].use_width,
+		g_strdup_printf("%s_%s_use_width", pre, p_types[i]),SECT);
+        load_float_setting(f, &pfs->pixmaps[i].width,
+		g_strdup_printf("%s_%s_width", pre, p_types[i]),SECT);
+        load_bool_setting(f, &pfs->pixmaps[i].use_height,
+		g_strdup_printf("%s_%s_use_height", pre, p_types[i]),SECT);
+        load_float_setting(f, &pfs->pixmaps[i].height,
+		g_strdup_printf("%s_%s_height", pre, p_types[i]),SECT);
+    }
 }
 
 void init_engine(window_settings * ws)
@@ -503,8 +543,26 @@ void init_engine(window_settings * ws)
 
     /* private frame settings for inactive frames */
     pfs = malloc(sizeof(private_fs));
-    bzero(pfs, sizeof(private_fs));
     ws->fs_inact->engine_fs = pfs;
+    bzero(pfs, sizeof(private_fs));
+    ACOLOR(inner, 0.8, 0.8, 0.8, 0.3);
+    ACOLOR(outer, 0.8, 0.8, 0.8, 0.3);
+    ACOLOR(title_inner, 0.8, 0.8, 0.8, 0.6);
+    ACOLOR(title_outer, 0.8, 0.8, 0.8, 0.6);
+
+    /* private frame settings for dark active frames */
+    pfs = malloc(sizeof(private_fs));
+    ws->fs_dark_act->engine_fs = pfs;
+    bzero(pfs, sizeof(private_fs));
+    ACOLOR(inner, 0.8, 0.8, 0.8, 0.5);
+    ACOLOR(outer, 0.8, 0.8, 0.8, 0.5);
+    ACOLOR(title_inner, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(title_outer, 0.8, 0.8, 0.8, 0.8);
+
+    /* private frame settings for dark inactive frames */
+    pfs = malloc(sizeof(private_fs));
+    ws->fs_dark_inact->engine_fs = pfs;
+    bzero(pfs, sizeof(private_fs));
     ACOLOR(inner, 0.8, 0.8, 0.8, 0.3);
     ACOLOR(outer, 0.8, 0.8, 0.8, 0.3);
     ACOLOR(title_inner, 0.8, 0.8, 0.8, 0.6);
@@ -515,6 +573,8 @@ void fini_engine(window_settings * ws)
 {
     free(ws->fs_act->engine_fs);
     free(ws->fs_inact->engine_fs);
+    free(ws->fs_dark_act->engine_fs);
+    free(ws->fs_dark_inact->engine_fs);
 }
 void layout_corners_frame(GtkWidget * vbox)
 {
@@ -551,13 +611,13 @@ void layout_corners_frame(GtkWidget * vbox)
     gtk_box_pack_startC(hbox, junk, TRUE, TRUE, 0);
     register_setting(junk, ST_FLOAT, SECT, "bottom_radius");
 }
-void my_engine_settings(GtkWidget * hbox,  gboolean active)
+void my_engine_settings(GtkWidget * hbox,  gboolean active, gboolean dark)
 {
     GtkWidget * vbox;
     GtkWidget * scroller;
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
     gtk_box_pack_startC(hbox, vbox, TRUE, TRUE, 0);
-    gtk_box_pack_startC(vbox, gtk_label_new(active?"Active Window":"Inactive Window"), FALSE, FALSE, 0);
+    gtk_box_pack_startC(vbox, gtk_label_new(dark?(active?"Dark Active Window":"Dark Inactive Window"):(active?"Active Window":"Inactive Window")), FALSE, FALSE, 0);
 #if GTK_CHECK_VERSION(3, 2, 0)
     gtk_box_pack_startC(vbox, gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 0);
 #else
@@ -591,15 +651,27 @@ void layout_engine_colors(GtkWidget * vbox)
     GtkWidget * hbox;
     hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
     gtk_box_pack_startC(vbox, hbox, TRUE, TRUE, 0);
-    my_engine_settings(hbox, TRUE);
+    my_engine_settings(hbox, TRUE, FALSE);
 #if GTK_CHECK_VERSION(3, 2, 0)
     gtk_box_pack_startC(hbox, gtk_separator_new (GTK_ORIENTATION_VERTICAL), FALSE, FALSE, 0);
 #else
     gtk_box_pack_startC(hbox, gtk_vseparator_new(), FALSE, FALSE, 0);
 #endif
-    my_engine_settings(hbox, FALSE);
+    my_engine_settings(hbox, FALSE, FALSE);
+#if GTK_CHECK_VERSION(3, 2, 0)
+    gtk_box_pack_startC(hbox, gtk_separator_new (GTK_ORIENTATION_VERTICAL), FALSE, FALSE, 0);
+#else
+    gtk_box_pack_startC(hbox, gtk_vseparator_new(), FALSE, FALSE, 0);
+#endif
+    my_engine_settings(hbox, TRUE, TRUE);
+#if GTK_CHECK_VERSION(3, 2, 0)
+    gtk_box_pack_startC(hbox, gtk_separator_new (GTK_ORIENTATION_VERTICAL), FALSE, FALSE, 0);
+#else
+    gtk_box_pack_startC(hbox, gtk_vseparator_new(), FALSE, FALSE, 0);
+#endif
+    my_engine_settings(hbox, FALSE, TRUE);
 }
-static void layout_pixmap_box(GtkWidget * vbox, gint b_t, gboolean active)
+static void layout_pixmap_box(GtkWidget * vbox, gint b_t, gboolean active, gboolean dark)
 {
     GtkWidget * filesel;
     GtkWidget * scroller;
@@ -616,6 +688,10 @@ static void layout_pixmap_box(GtkWidget * vbox, gint b_t, gboolean active)
     SettingItem * item;
     char * pre = "active";
     if(!active) pre = "inactive";
+    if(dark) {
+            pre = "dark_active";
+            if(!active) pre = "dark_inactive";
+    }
 
     table_append(gtk_label_new(names[b_t]), FALSE);
 
@@ -684,7 +760,7 @@ static void layout_pixmap_box(GtkWidget * vbox, gint b_t, gboolean active)
     }
 
 }
-void layout_engine_pixmaps(GtkWidget * vbox, gboolean active)
+void layout_engine_pixmaps(GtkWidget * vbox, gboolean active, gboolean dark)
 {
     GtkWidget * scroller;
     GtkWidget * hbox;
@@ -698,7 +774,11 @@ void layout_engine_pixmaps(GtkWidget * vbox, gboolean active)
     if(!active) {
        junk = gtk_check_button_new_with_label(_("Same as Active"));
        gtk_box_pack_startC(hbox, junk, TRUE, TRUE, 0);
-       register_setting(junk, ST_BOOL, SECT, "inactive_use_active_pixmaps");
+       if (!dark) {
+              register_setting(junk, ST_BOOL, SECT, "inactive_use_active_pixmaps");
+        } else {
+                register_setting(junk, ST_BOOL, SECT, "dark_inactive_use_active_pixmaps");
+        }
     }
 
     scroller=gtk_scrolled_window_new(NULL, NULL);
@@ -723,7 +803,7 @@ void layout_engine_pixmaps(GtkWidget * vbox, gboolean active)
 
     for(i=0;i<11;i++)
     {
-        layout_pixmap_box(vbox, i, active);
+        layout_pixmap_box(vbox, i, active, dark);
     }
 }
 void layout_engine_settings(GtkWidget * vbox)
@@ -731,8 +811,10 @@ void layout_engine_settings(GtkWidget * vbox)
     GtkWidget * note;
     note = gtk_notebook_new();
     gtk_box_pack_startC(vbox, note, TRUE, TRUE, 0);
-    layout_engine_pixmaps(build_notebook_page("Pixmaps (Active)", note), TRUE);
-    layout_engine_pixmaps(build_notebook_page("Pixmaps (Inactive)", note), FALSE);
+    layout_engine_pixmaps(build_notebook_page("Pixmaps (Active)", note), TRUE, FALSE);
+    layout_engine_pixmaps(build_notebook_page("Pixmaps (Inactive)", note), FALSE, FALSE);
+    layout_engine_pixmaps(build_notebook_page("Pixmaps (Dark Active)", note), TRUE, TRUE);
+    layout_engine_pixmaps(build_notebook_page("Pixmaps (Dark Inactive)", note), FALSE, TRUE);
     layout_engine_colors(build_notebook_page("Colors", note));
     layout_corners_frame(build_notebook_page("Frame", note));
 }
