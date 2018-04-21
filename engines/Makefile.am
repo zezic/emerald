@@ -20,6 +20,10 @@ libvrunner_la_LDFLAGS = -module -avoid-version -no-undefined
 libvrunner_la_LIBADD = @EMERALD_LIBS@ $(ENGINELIBS)
 libvrunner_la_SOURCES = vrunner.c vrunner_icon.h
 
+libzrunner_la_LDFLAGS = -module -avoid-version -no-undefined
+libzrunner_la_LIBADD = @EMERALD_LIBS@ $(ENGINELIBS)
+libzrunner_la_SOURCES = zrunner.c zrunner_icon.h
+
 libtruglass_la_LDFLAGS = -module -avoid-version -no-undefined
 libtruglass_la_LIBADD = @EMERALD_LIBS@ $(ENGINELIBS)
 libtruglass_la_SOURCES = truglass.c truglass_icon.h
@@ -38,6 +42,7 @@ engine_LTLIBRARIES = \
 					 liblegacy.la \
 					 libline.la \
 					 libvrunner.la \
+					 libzrunner.la \
 					 libtruglass.la \
 					 liboxygen.la \
 					 libpixmap.la \
