@@ -3837,6 +3837,7 @@ static void window_opened(WnckScreen * screen, WnckWindow * win)
     const gchar *window_class;
     const gchar *window_instance;
     const gchar *window_name;
+    const gchar *concatenated;
 
     d = g_malloc0(sizeof(decor_t));
     if (!d)
@@ -3848,10 +3849,14 @@ static void window_opened(WnckScreen * screen, WnckWindow * win)
     window_instance = wnck_window_get_class_instance_name(win);
     window_name = wnck_window_get_name(win);
 
-    d->window_class = g_strndup(g_strconcat(window_class, window_instance), strlen(g_strconcat(window_class, window_instance)));
+    // d->window_class = g_strndup(window_class, strlen(window_class));
     d->window_name = g_strndup(window_name, strlen(window_name));
 
-    g_fprintf(stderr, "New window. Class: '%s'. Name: '%s'. Instance: '%s'.\n", d->window_class, d->window_name, window_instance);
+    g_fprintf(stderr, "New window. Class: '%s'. Name: '%s'. Instance: '%s'.\n", d->window_class, d->window_name, window_instance == NULL ? "NULL" : window_instance);
+
+    concatenated = g_strconcat(window_class, window_instance == NULL ? "" : window_instance);
+    d->window_class = g_strndup(concatenated, strlen(concatenated));
+    g_fprintf(stderr, "Concat: '%s'.\n", concatenated);
 
     d->draw = draw_window_decoration;
     d->fs = d->active ? global_ws->fs_act : global_ws->fs_inact;
