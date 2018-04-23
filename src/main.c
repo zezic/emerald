@@ -3851,7 +3851,7 @@ static void window_opened(WnckScreen * screen, WnckWindow * win)
     d->window_class = g_strndup(g_strconcat(window_class, window_instance), strlen(g_strconcat(window_class, window_instance)));
     d->window_name = g_strndup(window_name, strlen(window_name));
 
-    g_fprintf(stderr, "New window. Class: '%s'. Name: '%s'. Instance: '%s'.\n", d->window_class, d->window_name, d->window_instance);
+    g_fprintf(stderr, "New window. Class: '%s'. Name: '%s'. Instance: '%s'.\n", d->window_class, d->window_name, window_instance);
 
     d->draw = draw_window_decoration;
     d->fs = d->active ? global_ws->fs_act : global_ws->fs_inact;
