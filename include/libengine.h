@@ -60,7 +60,8 @@ typedef enum _SettingType
     ST_ENGINE_COMBO,
     ST_SFILE_BOOL,
     ST_SFILE_INT,
-    ST_NUM
+    ST_NUM,
+    ST_ACTIVE_STRING
 } SettingType;
 typedef struct _SettingItem
 {

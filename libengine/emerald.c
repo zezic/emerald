@@ -156,10 +156,14 @@ void load_font_setting(GKeyFile * f, PangoFontDescription ** fd, gchar * key, gc
 void load_string_setting(GKeyFile * f, gchar ** s, gchar * key, gchar * sect)
 {
     gchar * st = g_key_file_get_string(f,sect,key,NULL);
+    printf("File string for %s.\n", key);
     if (st)
     {
-        if (*s)
+        if (*s) {
+            printf("Free!");
             g_free(*s);
+        }
+        printf("And set!\n");
         *s = st;
     }
 }
@@ -270,5 +274,3 @@ fill_rounded_rectangle (cairo_t       *cr,
     cairo_fill (cr);
     cairo_pattern_destroy (pattern);
 }
-
-

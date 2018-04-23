@@ -37,27 +37,27 @@
  */
 typedef struct _private_fs
 {
-    alpha_color title_left;
-    alpha_color title_left_lower;
-    alpha_color title_middle;
-    alpha_color title_middle_lower;
-    alpha_color title_right;
-    alpha_color title_right_lower;
     alpha_color window_halo;
-    alpha_color window_highlight;
-    alpha_color window_shadow;
+    alpha_color window_halo_1;
+    alpha_color window_halo_2;
+    alpha_color window_halo_3;
+    alpha_color window_halo_4;
+    alpha_color window_halo_5;
+    alpha_color window_halo_6;
     alpha_color separator_line;
-    alpha_color contents_highlight;
-    alpha_color contents_shadow;
-    alpha_color contents_halo;
-    double	title_notch_position;
-    double	curve_offset;
-    double	frame_notch_position;
-    double	color_contrast;
-    double	alpha_contrast;
-    double	glow_radius;
-    alpha_color glow_inner;
-    gboolean	use_glow;
+    alpha_color separator_line_1;
+    alpha_color separator_line_2;
+    alpha_color separator_line_3;
+    alpha_color separator_line_4;
+    alpha_color separator_line_5;
+    alpha_color separator_line_6;
+    alpha_color title_color;
+    alpha_color title_color_1;
+    alpha_color title_color_2;
+    alpha_color title_color_3;
+    alpha_color title_color_4;
+    alpha_color title_color_5;
+    alpha_color title_color_6;
 } private_fs;
 
 typedef struct _private_ws
@@ -67,6 +67,13 @@ typedef struct _private_ws
     gboolean round_bottom_left;
     gboolean round_bottom_right;
     double	corner_radius;
+    gchar       *extra_apps;
+    gchar      **extra_apps_1;
+    gchar      **extra_apps_2;
+    gchar      **extra_apps_3;
+    gchar      **extra_apps_4;
+    gchar      **extra_apps_5;
+    gchar      **extra_apps_6;
 } private_ws;
 
 void get_meta_info (EngineMetaInfo * emi)
@@ -95,23 +102,12 @@ draw_closed_curve (cairo_t *cr,
         double  x,
         double  y,
         double  w,
-        double  h,
-        double ch,
-        gboolean tophalf)
+        double  h)
 {
     cairo_move_to (cr, x, y);
-    if(tophalf || ch == 0)
-       cairo_line_to (cr, x + w, y);
-    else
-       cairo_curve_to (cr, x, y, x + w/2, y + ch, x + w, y);
-
+    cairo_line_to (cr, x + w, y);
     cairo_line_to (cr, x + w, y + h);
-
-    if(tophalf && ch != 0)
-       cairo_curve_to (cr, x + w, y + h, x + w/2, y + h + ch, x, y + h);
-    else
-       cairo_line_to (cr, x, y + h);
-
+    cairo_line_to (cr, x, y + h);
     cairo_line_to (cr, x, y);
 }
 
@@ -121,83 +117,11 @@ draw_filled_closed_curve (cairo_t *cr,
         double        y,
         double        w,
         double        h,
-        double        ch,
-        gboolean      tophalf,
-        alpha_color * c0,
-        alpha_color * c1,
-        alpha_color * c2)
+        alpha_color * c0)
 {
-    cairo_pattern_t *pattern;
-
-    draw_closed_curve (cr, x, y, w, h, ch, tophalf);
-
-    pattern = cairo_pattern_create_linear (x, y, x + w, y + h);
-    cairo_pattern_add_color_stop_rgba (pattern, 0.0, c0->color.r, c0->color.g,
-            c0->color.b,c0->alpha);
-    cairo_pattern_add_color_stop_rgba (pattern, 0.5, c1->color.r, c1->color.g,
-            c1->color.b,c1->alpha);
-    cairo_pattern_add_color_stop_rgba (pattern, 1.0, c2->color.r, c2->color.g,
-            c2->color.b,c2->alpha);
-    /* cairo_pattern_set_extend (pattern, CAIRO_EXTEND_PAD); */
-    cairo_set_source (cr, pattern);
+    draw_closed_curve (cr, x, y, w, h);
+    cairo_set_source_alpha_color (cr, c0);
     cairo_fill (cr);
-    cairo_pattern_destroy (pattern);
-}
-
-void create_glow(decor_t *d, cairo_t *cr,
-                 double x, double y, double w, double h,
-                 alpha_color * c0, double p)
-{
-       double r = 0.0;
-       double wp = p;
-       double hp = p;
-       /* cairo_rectangle(cr, x1, y1, w, h); */
-       frame_settings * fs = d->fs;
-       /* private_fs * pfs = fs->engine_fs; */
-       window_settings * ws = fs->ws;
-       if(wp*2 > w) wp = w/2;
-       if(hp*2 > h) hp = h/2;
-
-       x = x+wp;
-       y = y+hp;
-       wp = wp*2;
-       hp = hp*2;
-       w = w-wp;
-       h = h-hp;
-
-       alpha_color c1;
-       c1.color = c0->color;
-       c1.alpha = 0;
-       cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-
-       fill_rounded_rectangle (cr,
-            x-wp, y-hp, wp, hp, CORNER_TOPLEFT,
-	     c0, &c1, (SHADE_LEFT | SHADE_TOP ), ws, r);
-       fill_rounded_rectangle (cr,
-            x, y-hp, w, hp, 0,
-	    c0, &c1, SHADE_TOP, ws, r);
-       fill_rounded_rectangle (cr,
-            x+w, y-hp, wp, hp, CORNER_TOPRIGHT,
-	     c0, &c1, (SHADE_RIGHT | SHADE_TOP ), ws, r);
-       fill_rounded_rectangle (cr,
-            x-wp, y, wp, h, 0,
-	    c0, &c1, SHADE_LEFT, ws, r);
-       fill_rounded_rectangle (cr,
-            x+w, y, wp, h, 0,
-	    c0, &c1, SHADE_RIGHT, ws, r);
-       fill_rounded_rectangle (cr,
-            x-wp, y+h, wp, hp, CORNER_BOTTOMLEFT,
-	     c0, &c1, (SHADE_LEFT | SHADE_BOTTOM ), ws, r);
-       fill_rounded_rectangle (cr,
-            x, y+h, w, hp, 0,
-	    c0, &c1, SHADE_BOTTOM, ws, r);
-       fill_rounded_rectangle (cr,
-            x+w, y+h, wp, hp, CORNER_BOTTOMRIGHT,
-	     c0, &c1, (SHADE_RIGHT | SHADE_BOTTOM ), ws, r);
-
-       cairo_rectangle (cr, x, y, w, h);
-       cairo_set_source_alpha_color (cr, c0);
-       cairo_fill (cr);
 }
 
 static gint get_real_pos(window_settings * ws, gint tobj, decor_t * d)
@@ -223,31 +147,30 @@ static gint get_real_pos(window_settings * ws, gint tobj, decor_t * d)
 
 void engine_draw_frame(decor_t * d, cairo_t * cr)
 {
-    double x1, y1, x2, y2, h,
-           top_title_height, bottom_title_height,
-           top_left, top_right;
+    double x1, y1, x2, y2,
+           top_title_height;
     int top, title_width = 0, title_height = 0, title_pos;
-    /* double curve_offset; */
+    gboolean is_extra_app_1 = FALSE;
+    gboolean is_extra_app_2 = FALSE;
+    gboolean is_extra_app_3 = FALSE;
+    gboolean is_extra_app_4 = FALSE;
+    gboolean is_extra_app_5 = FALSE;
+    gboolean is_extra_app_6 = FALSE;
+    guint i;
+    alpha_color title_color;
+    alpha_color separator_line;
+    alpha_color window_halo;
+
     frame_settings * fs = d->fs;
     private_fs * pfs = fs->engine_fs;
     window_settings * ws = fs->ws;
     private_ws * pws = ws->engine_ws;
-    gdouble pleft;
-    gdouble ptop;
-    gdouble pwidth;
-    gdouble pheight;
     top = ws->win_extents.top + ws->titlebar_height;
 
     x1 = ws->left_space - ws->win_extents.left;
     y1 = ws->top_space - ws->win_extents.top;
     x2 = d->width - ws->right_space + ws->win_extents.right;
     y2 = d->height - ws->bottom_space + ws->win_extents.bottom;
-    pleft   = x1 + ws->win_extents.left - 0.5;
-    ptop    = y1 + top - 0.5;
-    pwidth  = x2 - x1 - ws->win_extents.left - ws->win_extents.right + 1;
-    pheight = y2 - y1 - top-ws->win_extents.bottom + 1;
-
-    h = d->height - ws->top_space - ws->titlebar_height - ws->bottom_space;
 
     int corners =
         ((pws->round_top_left)     ? CORNER_TOPLEFT     : 0) |
@@ -263,107 +186,98 @@ void engine_draw_frame(decor_t * d, cairo_t * cr)
     cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
     cairo_set_line_width (cr, 0.0);
 
-    top_title_height    = (top - 0.5)*pfs->title_notch_position + 1;
-    bottom_title_height = (top - 0.5)*(1-pfs->title_notch_position) + 1;
-
-    top_left = ws->win_extents.left;
-    top_right = ws->win_extents.right;
-    if((top_left < pws->corner_radius) && (corners & CORNER_TOPLEFT))
-		top_left = pws->corner_radius;
-    if((top_right < pws->corner_radius) && (corners & CORNER_TOPRIGHT))
-		top_right = pws->corner_radius;
+    top_title_height    = top;
 
     /* main top titlebar */
     rounded_rectangle (cr,
-            x1 + 0.5,
-            y1 + 0.5,
-            x2 - x1 - 1,
-            top + 1,
+            x1 + 1,
+            y1 + 1,
+            x2 - x1 - 2,
+            top,
             (CORNER_TOPLEFT | CORNER_TOPRIGHT) & corners, ws,
             pws->corner_radius);
     cairo_clip(cr);
 
-    draw_filled_closed_curve(cr,
-            x1 + 0.5,
-            y1 + 0.5,
-            x2 - x1 - 1,
-            top_title_height + 1,
-            pfs->curve_offset,
-            TRUE,
-            &pfs->title_left,
-            &pfs->title_middle,
-            &pfs->title_right);
-
-    draw_filled_closed_curve(cr,
-            x1 + 0.5,
-            y1 + top_title_height - 1,
-            x2 - x1 - 1,
-            bottom_title_height + 2,
-            pfs->curve_offset,
-            FALSE,
-            &pfs->title_left_lower,
-            &pfs->title_middle_lower,
-            &pfs->title_right_lower);
-
-    cairo_reset_clip(cr);
-
-    /* left and right */
-    fill_rounded_rectangle (cr,
-            x1+0.5,
-            y1 + top - 0.5,
-            ws->win_extents.left,
-            h + 0.5,
-            0,
-            &pfs->title_left_lower,&pfs->title_left_lower,
-            SHADE_BOTTOM, ws,
-            pws->corner_radius);
-
-    fill_rounded_rectangle (cr,
-            x2 - ws->win_extents.right-0.5,
-            y1 + top - 0.5,
-            ws->win_extents.right,
-            h + 0.5,
-            0,
-            &pfs->title_right_lower,&pfs->title_right_lower,
-            SHADE_BOTTOM, ws,
-            pws->corner_radius);
-
-    /* bottom frame */
-    rounded_rectangle (cr,
-            x1 + 0.5,
-            y2 - ws->win_extents.bottom,
-            x2 - x1 - 1,
-            ws->win_extents.bottom,
-            (CORNER_BOTTOMLEFT | CORNER_BOTTOMRIGHT) & corners, ws,
-            pws->corner_radius);
-
-    cairo_clip(cr);
-
-    draw_filled_closed_curve(cr,
-            x1 + 0.5,
-            y2 - ws->win_extents.bottom,
-            x2 - x1 - 1,
-            ws->win_extents.bottom,
-            0,
-            TRUE,
-            &pfs->title_left_lower,
-            &pfs->title_middle_lower,
-            &pfs->title_right_lower);
-
-    cairo_reset_clip(cr);
-
-    /* title glow */
-    if(pfs->use_glow) {
-       cairo_set_operator (cr, CAIRO_OPERATOR_ATOP);
-
-       if(PANGO_IS_LAYOUT(d->layout))
-          pango_layout_get_pixel_size(d->layout, &title_width, &title_height);
-       title_pos = get_real_pos(ws, TBT_TITLE, d);
-       create_glow (d, cr, title_pos, y1 + top/2.0 - title_height/2.0,
-                           title_width, title_height,
-                           &pfs->glow_inner, pfs->glow_radius);
+    if (pws->extra_apps_1 != NULL) {
+        for (i = 0; i < g_strv_length(pws->extra_apps_1); ++i) {
+            if (!g_strcmp0(d->window_class, pws->extra_apps_1[i])) {
+                    is_extra_app_1 = TRUE;
+            }
+        }
+    }
+    if (pws->extra_apps_2 != NULL) {
+        for (i = 0; i < g_strv_length(pws->extra_apps_2); ++i) {
+            if (!g_strcmp0(d->window_class, pws->extra_apps_2[i])) {
+                    is_extra_app_2 = TRUE;
+            }
+        }
+    }
+    if (pws->extra_apps_3 != NULL) {
+        for (i = 0; i < g_strv_length(pws->extra_apps_3); ++i) {
+            if (!g_strcmp0(d->window_class, pws->extra_apps_3[i])) {
+                    is_extra_app_3 = TRUE;
+            }
+        }
+    }
+    if (pws->extra_apps_4 != NULL) {
+        for (i = 0; i < g_strv_length(pws->extra_apps_4); ++i) {
+            if (!g_strcmp0(d->window_class, pws->extra_apps_4[i])) {
+                    is_extra_app_4 = TRUE;
+            }
+        }
+    }
+    if (pws->extra_apps_5 != NULL) {
+        for (i = 0; i < g_strv_length(pws->extra_apps_5); ++i) {
+            if (!g_strcmp0(d->window_class, pws->extra_apps_5[i])) {
+                    is_extra_app_5 = TRUE;
+            }
+        }
+    }
+    if (pws->extra_apps_6 != NULL) {
+        for (i = 0; i < g_strv_length(pws->extra_apps_6); ++i) {
+            if (!g_strcmp0(d->window_class, pws->extra_apps_6[i])) {
+                    is_extra_app_6 = TRUE;
+            }
+        }
     }
 
+    title_color = pfs->title_color;
+    separator_line = pfs->separator_line;
+    window_halo = pfs->window_halo;
+
+    if (is_extra_app_1) {
+        title_color = pfs->title_color_1;
+        separator_line = pfs->separator_line_1;
+        window_halo = pfs->window_halo_1;
+    } else if (is_extra_app_2) {
+        title_color = pfs->title_color_2;
+        separator_line = pfs->separator_line_2;
+        window_halo = pfs->window_halo_2;
+    } else if (is_extra_app_3) {
+        title_color = pfs->title_color_3;
+        separator_line = pfs->separator_line_3;
+        window_halo = pfs->window_halo_3;
+    } else if (is_extra_app_4) {
+        title_color = pfs->title_color_4;
+        separator_line = pfs->separator_line_4;
+        window_halo = pfs->window_halo_4;
+    } else if (is_extra_app_5) {
+        title_color = pfs->title_color_5;
+        separator_line = pfs->separator_line_5;
+        window_halo = pfs->window_halo_5;
+    } else if (is_extra_app_6) {
+        title_color = pfs->title_color_6;
+        separator_line = pfs->separator_line_6;
+        window_halo = pfs->window_halo_6;
+    }
+    draw_filled_closed_curve(cr,
+        x1 + 1,
+        y1 + 1,
+        x2 - x1 - 2,
+        top_title_height,
+        &title_color);
+
+    cairo_reset_clip(cr);
 
     /* ======= NEW LAYER ====== */
     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
@@ -371,50 +285,11 @@ void engine_draw_frame(decor_t * d, cairo_t * cr)
 
     /* titlebar separator */
     if(pfs->separator_line.alpha > 0) {
-       cairo_set_source_alpha_color(cr, &pfs->separator_line);
-       cairo_move_to (cr, x1 + 0.5, y1 + top - 0.5);
-       cairo_rel_line_to (cr, x2 - x1 - 1, 0.0);
+       cairo_set_source_alpha_color(cr, &separator_line);
+       cairo_move_to (cr, x1 + 1, y1 + top - 0.5);
+       cairo_rel_line_to (cr, x2 - x1 - 2, 0.0);
        cairo_stroke (cr);
     }
-
-    /* frame clip */
-    rounded_rectangle (cr,
-            x1 + 0.5, y1 + 0.5,
-            x2 - x1 - 1.0, y2 - y1 - 1.0,
-            (CORNER_TOPLEFT | CORNER_TOPRIGHT | CORNER_BOTTOMLEFT |
-             CORNER_BOTTOMRIGHT) & corners, ws,
-            pws->corner_radius);
-    cairo_clip (cr);
-
-	cairo_translate (cr, 1.0, 1.0);
-
-    /* highlight */
-    rounded_rectangle (cr,
-            x1 + 0.5, y1 + 0.5,
-            x2 - x1 - 1.0, y2 - y1 - 1.0,
-            (CORNER_TOPLEFT | CORNER_TOPRIGHT | CORNER_BOTTOMLEFT |
-             CORNER_BOTTOMRIGHT) & corners, ws,
-            pws->corner_radius);
-
-    cairo_set_source_alpha_color (cr, &pfs->window_highlight);
-    cairo_stroke (cr);
-
-    cairo_translate (cr, -2.0, -2.0);
-
-    /* shadow */
-    rounded_rectangle (cr,
-            x1 + 0.5, y1 + 0.5,
-            x2 - x1 - 1.0, y2 - y1 - 1.0,
-            (CORNER_TOPLEFT | CORNER_TOPRIGHT | CORNER_BOTTOMLEFT |
-             CORNER_BOTTOMRIGHT) & corners, ws,
-            pws->corner_radius);
-
-    cairo_set_source_alpha_color (cr, &pfs->window_shadow);
-    cairo_stroke (cr);
-
-    cairo_translate (cr, 1.0, 1.0);
-
-    cairo_reset_clip (cr);
 
     /* halo */
     rounded_rectangle (cr,
@@ -424,33 +299,34 @@ void engine_draw_frame(decor_t * d, cairo_t * cr)
              CORNER_BOTTOMRIGHT) & corners, ws,
             pws->corner_radius);
 
-    cairo_set_source_alpha_color (cr, &pfs->window_halo);
+    cairo_set_source_alpha_color (cr, &window_halo);
     cairo_stroke (cr);
+}
 
-    /* inner border
-       TODO: make this a bit more pixel-perfect... but it works for now */
-
-    cairo_set_line_width (cr, 1.0);
-
-    cairo_move_to (cr, pleft + pwidth + 1.5, ptop - 1);
-    cairo_rel_line_to (cr, -pwidth - 2.5, 0);
-    cairo_rel_line_to (cr, 0, pheight + 2.5);
-    cairo_set_source_alpha_color (cr, &pfs->contents_shadow);
-    cairo_stroke (cr);
-
-    cairo_move_to (cr, pleft + pwidth + 1, ptop - 1.5);
-    cairo_rel_line_to (cr, 0, pheight + 2.5);
-    cairo_rel_line_to (cr, -pwidth - 2.5, 0);
-    cairo_set_source_alpha_color (cr, &pfs->contents_highlight);
-    cairo_stroke (cr);
-
-    cairo_move_to (cr, pleft, ptop);
-    cairo_rel_line_to (cr, pwidth, 0);
-    cairo_rel_line_to (cr, 0, pheight);
-    cairo_rel_line_to (cr, -pwidth, 0);
-    cairo_rel_line_to (cr, 0, -pheight);
-    cairo_set_source_alpha_color (cr, &pfs->contents_halo);
-    cairo_stroke(cr);
+void parse_extra_apps(private_ws * pws, gchar * extra_apps)
+{
+    guint i;
+    gchar **extra_groups = g_strsplit(extra_apps, ",", 0);
+    for (i = 0; i < g_strv_length(extra_groups); ++i) {
+        if (i == 0) {
+            pws->extra_apps_1 = g_strsplit(extra_groups[i], "|", 0);
+        }
+        if (i == 1) {
+            pws->extra_apps_2 = g_strsplit(extra_groups[i], "|", 0);
+        }
+        if (i == 2) {
+            pws->extra_apps_3 = g_strsplit(extra_groups[i], "|", 0);
+        }
+        if (i == 3) {
+            pws->extra_apps_4 = g_strsplit(extra_groups[i], "|", 0);
+        }
+        if (i == 4) {
+            pws->extra_apps_5 = g_strsplit(extra_groups[i], "|", 0);
+        }
+        if (i == 5) {
+            pws->extra_apps_6 = g_strsplit(extra_groups[i], "|", 0);
+        }
+    }
 }
 
 void load_engine_settings(GKeyFile * f, window_settings * ws)
@@ -458,40 +334,39 @@ void load_engine_settings(GKeyFile * f, window_settings * ws)
     private_ws * pws = ws->engine_ws;
 
     /* color settings */
-    PFACS(title_left);
-    PFACS(title_middle);
-    PFACS(title_right);
     PFACS(window_halo);
-    PFACS(window_highlight);
-    PFACS(window_shadow);
+    PFACS(window_halo_1);
+    PFACS(window_halo_2);
+    PFACS(window_halo_3);
+    PFACS(window_halo_4);
+    PFACS(window_halo_5);
+    PFACS(window_halo_6);
     PFACS(separator_line);
-    PFACS(contents_shadow);
-    PFACS(contents_highlight);
-    PFACS(contents_halo);
-    PFACS(glow_inner);
-    FLTS(color_contrast);
-    FLTS(glow_radius);
-    FLTS(alpha_contrast);
-    FLTS(curve_offset);
-    FLTS(title_notch_position);
+    PFACS(separator_line_1);
+    PFACS(separator_line_2);
+    PFACS(separator_line_3);
+    PFACS(separator_line_4);
+    PFACS(separator_line_5);
+    PFACS(separator_line_6);
+    PFACS(title_color);
+    PFACS(title_color_1);
+    PFACS(title_color_2);
+    PFACS(title_color_3);
+    PFACS(title_color_4);
+    PFACS(title_color_5);
+    PFACS(title_color_6);
 
     private_fs * pfs = ws->fs_act->engine_fs;
-    CCOLOR(title_left_lower, title_left);
-    CCOLOR(title_middle_lower, title_middle);
-    CCOLOR(title_right_lower, title_right);
-    load_bool_setting(f, &pfs->use_glow, "active_use_glow", SECT);
 
     pfs = ws->fs_inact->engine_fs;
-    CCOLOR(title_left_lower, title_left);
-    CCOLOR(title_middle_lower, title_middle);
-    CCOLOR(title_right_lower, title_right);
-    load_bool_setting(f, &pfs->use_glow, "inactive_use_glow", SECT);
 
     load_bool_setting(f, &pws->round_top_left, "round_top_left", SECT);
     load_bool_setting(f, &pws->round_top_right, "round_top_right", SECT);
     load_bool_setting(f, &pws->round_bottom_left, "round_bottom_left", SECT);
     load_bool_setting(f, &pws->round_bottom_right, "round_bottom_right", SECT);
     load_float_setting(f, &pws->corner_radius, "radius", SECT);
+    load_string_setting(f, &pws->extra_apps, "extra_apps", SECT);
+    parse_extra_apps(pws, pws->extra_apps);
 }
 
 void init_engine(window_settings * ws)
@@ -506,52 +381,63 @@ void init_engine(window_settings * ws)
     pws->round_bottom_left = TRUE;
     pws->round_bottom_right = TRUE;
     pws->corner_radius = 5.0;
+    pws->extra_apps = g_strdup("Atom|Gnome-terminal,discord|something");
+    parse_extra_apps(pws, pws->extra_apps);
 
     pfs = g_malloc0(sizeof(private_fs));
     ws->fs_act->engine_fs = pfs;
-    pfs->title_notch_position = 0.5;
-    pfs->curve_offset = 0.0;
-    pfs->color_contrast = 0.9;
-    pfs->use_glow = FALSE;
-    pfs->alpha_contrast = 0.9;
-    pfs->glow_radius = 7.0;
-    ACOLOR(title_left, 0.8, 0.8, 0.8, 0.8);
-    CCOLOR(title_left_lower,title_left);
-    ACOLOR(title_middle, 0.8, 0.8, 0.8, 0.8);
-    CCOLOR(title_middle_lower, title_middle);
-    ACOLOR(title_right, 0.8, 0.8, 0.8, 0.8);
-    CCOLOR(title_right_lower, title_right);
-    ACOLOR(window_highlight, 1.0, 1.0, 1.0, 0.8);
-    ACOLOR(window_shadow, 0.6, 0.6, 0.6, 0.8);
+
     ACOLOR(window_halo, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_1, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_2, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_3, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_4, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_5, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_6, 0.8, 0.8, 0.8, 0.8);
+
     ACOLOR(separator_line, 0.0, 0.0, 0.0, 0.0);
-    ACOLOR(contents_highlight, 1.0, 1.0, 1.0, 0.8);
-    ACOLOR(contents_shadow, 0.6, 0.6, 0.6, 0.8);
-    ACOLOR(contents_halo, 0.8, 0.8, 0.8, 0.8);
-    ACOLOR(glow_inner, 0.9, 0.9, 0.9, 0.9);
+    ACOLOR(separator_line_1, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_2, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_3, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_4, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_5, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_6, 0.0, 0.0, 0.0, 0.0);
+
+    ACOLOR(title_color, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_1, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_2, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_3, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_4, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_5, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_6, 0.2, 0.9, 0.3, 0.9);
 
     pfs = g_malloc0(sizeof(private_fs));
     ws->fs_inact->engine_fs = pfs;
-    pfs->title_notch_position = 0.5;
-    pfs->curve_offset = 0.0;
-    pfs->color_contrast = 0.9;
-    pfs->alpha_contrast = 0.9;
-    pfs->use_glow = FALSE;
-    pfs->glow_radius = 7.0;
-    ACOLOR(title_left, 0.8, 0.8, 0.8,0.6);
-    CCOLOR(title_left_lower, title_left);
-    ACOLOR(title_middle, 0.8, 0.8, 0.8, 0.6);
-    CCOLOR(title_middle_lower, title_middle);
-    ACOLOR(title_right, 0.8, 0.8, 0.8, 0.6);
-    CCOLOR(title_right_lower, title_right);
-    ACOLOR(window_highlight,1.0, 1.0, 1.0, 0.7);
-    ACOLOR(window_shadow, 0.6, 0.6, 0.6, 0.7);
-    ACOLOR(window_halo, 0.8, 0.8, 0.8, 0.7);
+
+    ACOLOR(window_halo, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_1, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_2, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_3, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_4, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_5, 0.8, 0.8, 0.8, 0.8);
+    ACOLOR(window_halo_6, 0.8, 0.8, 0.8, 0.8);
+
     ACOLOR(separator_line, 0.0, 0.0, 0.0, 0.0);
-    ACOLOR(contents_highlight, 1.0, 1.0, 1.0, 0.8);
-    ACOLOR(contents_shadow, 0.6, 0.6, 0.6, 0.8);
-    ACOLOR(contents_halo, 0.8, 0.8, 0.8, 0.8);
-    ACOLOR(glow_inner, 0.9, 0.9, 0.9, 0.9);
+    ACOLOR(separator_line_1, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_2, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_3, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_4, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_5, 0.0, 0.0, 0.0, 0.0);
+    ACOLOR(separator_line_6, 0.0, 0.0, 0.0, 0.0);
+
+    ACOLOR(title_color, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_1, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_2, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_3, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_4, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_5, 0.2, 0.9, 0.3, 0.9);
+    ACOLOR(title_color_6, 0.2, 0.9, 0.3, 0.9);
+
 }
 
 void fini_engine(window_settings * ws)
@@ -593,8 +479,21 @@ void layout_corners_frame(GtkWidget * vbox)
     junk = scaler_new(0, 20, 0.5);
     gtk_box_pack_startC(hbox, junk, TRUE, TRUE, 0);
     register_setting(junk, ST_FLOAT, SECT, "radius");
-
 }
+
+void layout_apps(GtkWidget * vbox)
+{
+    GtkWidget * hbox;
+    GtkWidget * junk;
+
+    junk = gtk_label_new("Extra Apps");
+    gtk_box_pack_startC(vbox, junk, FALSE, FALSE, 0);
+
+    junk = gtk_entry_new();
+    gtk_box_pack_startC(vbox, junk, FALSE, FALSE, 0);
+    register_setting(junk, ST_ACTIVE_STRING, SECT, "extra_apps");
+}
+
 void my_engine_settings(GtkWidget * hbox,  gboolean active)
 {
     GtkWidget * vbox;
@@ -628,92 +527,32 @@ void my_engine_settings(GtkWidget * hbox,  gboolean active)
 
     make_labels(_("Colors"));
     table_append_separator();
-    ACAV(_("Left Blend"), "title_left", SECT);
-    ACAV(_("Middle Blend"), "title_middle", SECT);
-    ACAV(_("Right Blend"), "title_right", SECT);
+    ACAV("Title Color", "title_color", SECT);
+    ACAV("Title Color 1", "title_color_1", SECT);
+    ACAV("Title Color 2", "title_color_2", SECT);
+    ACAV("Title Color 3", "title_color_3", SECT);
+    ACAV("Title Color 4", "title_color_4", SECT);
+    ACAV("Title Color 5", "title_color_5", SECT);
+    ACAV("Title Color 6", "title_color_6", SECT);
 
     table_append_separator();
-    junk = gtk_label_new(_("Contrast"));
-    table_append(junk,  FALSE);
-    junk = gtk_label_new(_("(Color)"));
-    table_append(junk,  FALSE);
-    junk = scaler_new(0, 1, 0.01);
-    table_append(junk,  FALSE);
-    if(active)
-		register_setting(junk, ST_FLOAT, SECT, "active_color_contrast");
-    else
-		register_setting(junk, ST_FLOAT, SECT, "inactive_color_contrast");
-
-    junk = gtk_label_new(_("Contrast"));
-    table_append(junk, FALSE);
-    junk = gtk_label_new(_("(Alpha)"));
-    table_append(junk, FALSE);
-    junk = scaler_new(0, 1, 0.01);
-    table_append(junk, FALSE);
-    if(active)
-		register_setting(junk, ST_FLOAT, SECT, "active_alpha_contrast");
-    else
-		register_setting(junk, ST_FLOAT, SECT, "inactive_alpha_contrast");
-
-    junk = gtk_label_new(_("Notch"));
-    table_append(junk, FALSE);
-    junk = gtk_label_new(_("Position"));
-    table_append(junk, FALSE);
-    junk = scaler_new(0, 1, 0.01);
-    gtk_range_set_value(GTK_RANGE(junk), 0.5);
-    table_append(junk, FALSE);
-    if(active)
-		register_setting(junk, ST_FLOAT, SECT, "active_title_notch_position");
-    else
-		register_setting(junk, ST_FLOAT, SECT, "inactive_title_notch_position");
-
-    junk = gtk_label_new(_("Curve"));
-    table_append(junk, FALSE);
-    junk = gtk_label_new(_("Offset"));
-    table_append(junk, FALSE);
-    junk = scaler_new(-100, 100, 0.1);
-    gtk_range_set_value(GTK_RANGE(junk), 0);
-    table_append(junk, FALSE);
-    if(active)
-		register_setting(junk, ST_FLOAT, SECT, "active_curve_offset");
-    else
-		register_setting(junk, ST_FLOAT, SECT, "inactive_curve_offset");
+    ACAV("Separator", "separator_line", SECT);
+    ACAV("Separator 1", "separator_line_1", SECT);
+    ACAV("Separator 2", "separator_line_2", SECT);
+    ACAV("Separator 3", "separator_line_3", SECT);
+    ACAV("Separator 4", "separator_line_4", SECT);
+    ACAV("Separator 5", "separator_line_5", SECT);
+    ACAV("Separator 6", "separator_line_6", SECT);
 
     table_append_separator();
+    ACAV("Outline", "window_halo", SECT);
+    ACAV("Outline 1", "window_halo_1", SECT);
+    ACAV("Outline 2", "window_halo_2", SECT);
+    ACAV("Outline 3", "window_halo_3", SECT);
+    ACAV("Outline 4", "window_halo_4", SECT);
+    ACAV("Outline 5", "window_halo_5", SECT);
+    ACAV("Outline 6", "window_halo_6", SECT);
 
-    junk = gtk_check_button_new_with_label(_("Use Glow"));
-    gtk_box_pack_startC(vbox, junk, FALSE, FALSE, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(junk), FALSE);
-    if(active)
-		register_setting(junk, ST_BOOL, SECT, "active_use_glow");
-    else
-		register_setting(junk, ST_BOOL, SECT, "inactive_use_glow");
-
-    ACAV(_("Title Glow"), "glow_inner", SECT);
-    junk = gtk_label_new("Glow");
-    table_append(junk, FALSE);
-    junk = gtk_label_new(_("Radius"));
-    table_append(junk, FALSE);
-    junk = scaler_new(0, 25, 0.1);
-    gtk_range_set_value(GTK_RANGE(junk), 7.0);
-    table_append(junk, FALSE);
-    if(active)
-		register_setting(junk, ST_FLOAT, SECT, "active_glow_radius");
-    else
-		register_setting(junk, ST_FLOAT, SECT, "inactive_glow_radius");
-
-    table_append_separator();
-    ACAV(_("Titlebar Separator"), "separator_line", SECT);
-
-    table_append_separator();
-    ACAV(_("Frame Outline"), "window_halo", SECT);
-    ACAV(_("Frame Highlight"), "window_highlight", SECT);
-    ACAV("Frame Shadow", "window_shadow", SECT);
-
-    table_append_separator();
-    ACAV(_("Contents Outline"), "contents_halo", SECT);
-    ACAV(_("Contents Highlight"), "contents_highlight", SECT);
-    ACAV("Contents Shadow", "contents_shadow", SECT);
 }
 
 void layout_engine_colors(GtkWidget * vbox)
@@ -743,4 +582,5 @@ void layout_engine_settings(GtkWidget * vbox)
     gtk_box_pack_startC(vbox, note, TRUE, TRUE, 0);
     layout_engine_colors(build_notebook_page(_("Colors"), note));
     layout_corners_frame(build_notebook_page(_("Frame"), note));
+    layout_apps(build_notebook_page("Apps", note));
 }

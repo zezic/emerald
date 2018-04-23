@@ -83,11 +83,11 @@ static gchar* display_part(const gchar *p)
     g_free(name);
     name = tmp;
   }
-    
+
   if ((tmp = g_strrstr(name,"."))) {
     *tmp = 0;
   }
-    
+
   return name;
 }
 
@@ -107,7 +107,7 @@ GtkWidget * scaler_new(gdouble low, gdouble high, gdouble prec)
     gtk_widget_set_size_request(w,100,-1);
     return w;
 }
-void add_color_alpha_value(gchar * caption, gchar * basekey, gchar * sect, gboolean active) 
+void add_color_alpha_value(gchar * caption, gchar * basekey, gchar * sect, gboolean active)
 {
     GtkWidget * w;
     gchar * colorkey;
@@ -115,7 +115,7 @@ void add_color_alpha_value(gchar * caption, gchar * basekey, gchar * sect, gbool
     colorkey = g_strdup_printf(active?"active_%s":"inactive_%s",basekey);
     alphakey = g_strdup_printf(active?"active_%s_alpha":"inactive_%s_alpha",
             basekey);
-    
+
     w = gtk_label_new(caption);
     table_append(w,FALSE);
 
@@ -211,6 +211,11 @@ SettingItem * register_setting(GtkWidget * widget, SettingType type, gchar * sec
                     item);
             break;
         case ST_ENGINE_COMBO:
+            g_signal_connect(widget,"changed",
+                    G_CALLBACK(cb_apply_setting),
+                    item);
+            break;
+        case ST_ACTIVE_STRING:
             g_signal_connect(widget,"changed",
                     G_CALLBACK(cb_apply_setting),
                     item);
@@ -403,11 +408,12 @@ void cb_apply_setting(GtkWidget * w, gpointer p)
 void setup_dbus()
 {
     dbcon = dbus_bus_get (DBUS_BUS_SESSION,NULL);
-    dbus_connection_setup_with_g_main(dbcon,NULL);    
+    dbus_connection_setup_with_g_main(dbcon,NULL);
 }
 #endif
 void write_setting(SettingItem * item, gpointer p)
 {
+    printf("Writing setting!\n");
     GKeyFile * f = (GKeyFile *) p;
     switch(item->type)
     {
@@ -431,6 +437,9 @@ void write_setting(SettingItem * item, gpointer p)
             break;
         case ST_STRING_COMBO:
             g_key_file_set_string(f,item->section,item->key,get_string_combo(item));
+            break;
+        case ST_ACTIVE_STRING:
+            g_key_file_set_string(f,item->section,item->key,get_string(item));
             break;
         case ST_IMG_FILE:
             /* g_key_file_set_string(f,item->section,item->key,get_img_file(item)); */
@@ -715,7 +724,7 @@ void set_float(SettingItem * item, gdouble f)
 {
     if(g_strcmp0(G_OBJECT_TYPE_NAME(item->widget),"GtkSpinButton") == 0) {
          gtk_spin_button_set_value((GtkSpinButton *)item->widget, f);
-    } 
+    }
     else {
          gtk_range_set_value(GTK_RANGE(item->widget),f);
     }
@@ -800,6 +809,14 @@ void read_setting(SettingItem * item, gpointer * p)
             }
             break;
         case ST_META_STRING:
+            s = g_key_file_get_string(f,item->section,item->key,&e);
+            if (!e && s)
+            {
+                set_string(item,s);
+                g_free(s);
+            }
+            break;
+        case ST_ACTIVE_STRING:
             s = g_key_file_get_string(f,item->section,item->key,&e);
             if (!e && s)
             {
@@ -1031,7 +1048,7 @@ void init_engine_list()
     /*presumes the container & combo are created
       presumes the combo is NOT registered       */
     GtkCellRenderer * r;
-    
+
     EngineModel = gtk_list_store_new(ENGINE_COL_COUNT,G_TYPE_STRING,
             G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,GDK_TYPE_PIXBUF);
     gchar * local_engine_dir = g_strjoin("/",g_get_home_dir(),".emerald/engines",NULL);
@@ -1045,7 +1062,7 @@ void init_engine_list()
     engine_scan_dir(local_engine_dir);
     g_free(local_engine_dir);
     engine_scan_dir(ENGINE_DIR);
-    
+
     register_setting(EngineCombo,ST_ENGINE_COMBO,"engine","engine");
 }
 GtkWidget * build_notebook_page(gchar * title, GtkWidget * notebook)

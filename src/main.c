@@ -3834,12 +3834,22 @@ static void window_opened(WnckScreen * screen, WnckWindow * win)
     decor_t *d;
     Window window;
     gulong xid;
+    const gchar *window_class;
+    const gchar *window_name;
 
     d = g_malloc0(sizeof(decor_t));
     if (!d)
 	return;
 
     wnck_window_get_client_window_geometry(win, NULL, NULL, &d->client_width, &d->client_height);
+
+    window_class = wnck_window_get_class_group_name(win);
+    window_name = wnck_window_get_name(win);
+
+    d->window_class = g_strndup(window_class, strlen(window_class));
+    d->window_name = g_strndup(window_name, strlen(window_name));
+
+    g_fprintf(stderr, "New window. Class: '%s'. Name: '%s'.\n", d->window_class, d->window_name);
 
     d->draw = draw_window_decoration;
     d->fs = d->active ? global_ws->fs_act : global_ws->fs_inact;
