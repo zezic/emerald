@@ -334,7 +334,6 @@ typedef struct _decor
     gboolean only_change_active;
     gchar *window_class;
     gchar *window_name;
-    gchar *window_instance;
 } decor_t;
 
 #define LFACSS(zc,sec) \
