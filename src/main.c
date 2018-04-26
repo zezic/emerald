@@ -3852,9 +3852,9 @@ static void window_opened(WnckScreen * screen, WnckWindow * win)
     // d->window_class = g_strndup(window_class, strlen(window_class));
     d->window_name = g_strndup(window_name, strlen(window_name));
 
-    g_fprintf(stderr, "New window. Class: '%s'. Name: '%s'. Instance: '%s'.\n", d->window_class, d->window_name, window_instance == NULL ? "NULL" : window_instance);
+    g_fprintf(stderr, "New window. Class: '%s'. Name: '%s'. Instance: '%s'.\n", window_class, window_name, window_instance == NULL ? "kekNULL" : window_instance);
 
-    concatenated = g_strconcat(window_class, window_instance == NULL ? "" : window_instance);
+    concatenated = g_strconcat(window_class == NULL ? "" : window_class, window_instance == NULL ? "" : window_instance);
     d->window_class = g_strndup(concatenated, strlen(concatenated));
     g_fprintf(stderr, "Concat: '%s'.\n", concatenated);
 
